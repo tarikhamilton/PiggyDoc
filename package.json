@@ -1,0 +1,25 @@
+{
+  "name": "wp-shortcode-documentor",
+  "version": "0.1.0",
+  "description": "Generates documentation for WordPress shortcodes.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tikitariki/wp-shortcode-documentor.git"
+  },
+  "keywords": [
+    "wordpress",
+    "documentator",
+    "documentation",
+    "shortcode"
+  ],
+  "author": "Tarik Hamilton",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/tikitariki/wp-shortcode-documentor/issues"
+  },
+  "homepage": "https://github.com/tikitariki/wp-shortcode-documentor#readme"
+}
