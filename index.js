@@ -22,6 +22,8 @@ var PiggyDoc = (function() {
   /**
    * Pig config
    * 
+   * Your pigs are added here.
+   * 
    * @private
    * @property config
    * @type Object
@@ -43,22 +45,20 @@ var PiggyDoc = (function() {
     /**
      * Reads or sets the configuration from a path or JSON
      * 
-     * @method config
-     * @param config {mixed} Can be a path (preferred) or object literal  
+     * @method  config
+     * @param   settings {mixed} Can be a path (preferred) or object literal  
      */
-    this.config = function (config) {
-      var config = config || null
+    this.config = function (settings) {
+      var config = settings || null
       if (typeof config == 'object' && config) {
         _config = config
       } 
       else if (typeof config == 'string') {
         fs.readFile(config, 'utf8', (err, data) => {
           _config = JSON.parse(data)
-          console.log(_config)
         })
       }
       else {
-        console.log(_config)
         return _config
       }
     }
@@ -84,13 +84,15 @@ var PiggyDoc = (function() {
             
             if (VERBOSE_MODE)
               console.log(file.path + ' was successfully added.')
-            
-          } else {
+          } 
+          else
             console.log('Oops! The file "' + error.path + '" failed to be added.')
-          }
+            
           filesProcessed++
+          
           if (filesProcessed == fileCount)
             callback()
+            
         }.bind(this))
       }
       
@@ -102,7 +104,6 @@ var PiggyDoc = (function() {
       else {
         addFile(filepath)
       }
-
     }
     
     /**
@@ -114,6 +115,7 @@ var PiggyDoc = (function() {
       /**
        * Get docblocks from files
        * 
+       * @method getDocblocks
        * @returns files {Array} An array with the keys being file paths,
        *    and the values is an array of the docblocks
        */
@@ -130,8 +132,14 @@ var PiggyDoc = (function() {
         return files
       }
       /**
-       * Scan lines
+       * Read lines of docblock and apply function to line 
+       * 
+       * @method  readLines
+       * @param   callback {Function} Perform function on each line.
        */
+      onEachLine: function (callback) {
+        
+      }
     }
   }
   
