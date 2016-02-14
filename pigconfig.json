@@ -1,0 +1,8 @@
+{
+  "trigger": "\\@shortcode",
+  "tags": [
+    {
+      "name": "\\$param"
+    }
+  ]
+}

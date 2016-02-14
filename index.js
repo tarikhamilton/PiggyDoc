@@ -9,153 +9,144 @@ if (VERBOSE_MODE) { console.log('Verbose Mode is ON') }
 /**
  * @class PiggyDoc
  */
-var PiggyDoc = function () {
+var PiggyDoc = (function() {
   /**
-   * Files to be read
+   * Files to be scanned
    * 
-   * @property
+   * @private
+   * @property files
    * @type Array
    */
-  this.files = []
-    
-  /**
-   * Collection of Pigs
-   * 
-   * @property
-   * @type Array
-   */
-  this.pigs = []
+  var _files = []
   
   /**
    * Pig config
    * 
-   * @property
-   * @type String
+   * @private
+   * @property config
+   * @type Object
    */
-  this.config = {}
-
-  /**
-   * Adds file to files
-   * 
-   * @method addFile
-   */
-  this.addFile = function (filepath) {
-    fs.readFile(filepath, 'utf8', function (error, data) {
-      if (!error) {
-        let file = {
-          path: filepath,
-          content: data
-        }
-        this.files.push(file)
-        
-        if (VERBOSE_MODE)
-          console.log(file.path + ' was successfully added.')
-        
-      } else {
-        console.log(error)
-      }
-    }.bind(this))
-  }
-}
-
-var piggydoc = new PiggyDoc()
-
-var generate = function () {
-  fs.readFile('wp-shortcode-documentor/test.php', 'utf8', function (error, data) {
-
-    if (!error) {
-      var regex = /(\/\*{2})([\s\S]+?)\*\//g,
-        docblocks = data.match(regex)            
-      /*
-       * pig, as in piggyback. This is supposed to go in a regular docblock.
-       * 
-       * pig.trigger identifies docblocks with your custom tag and scan the rest
-       *             the custom parameters.
-       * 
-       * pig.tags an array that houses the custom parameters.
-       * 
-       * IMPORTANT!!!
-       * You must escape all characters that would be escaped in Regex.
-       * 
-       * When using new RegExp (allows for a variable to go into the regex)
-       * you must escape for the JavaScript String, and again for regex.
-       * 
-       * Ex: \\$param
-       * 
-       */
-
-      var param = {
-        name: '\\$param'
-      }
-
-      var pig = {
-        trigger: '\\@shortcode',
-        tags: [param]
-      }
-
-      docblocks.forEach(function (docblock, i) {
-        var triggerRegex = new RegExp(pig.trigger, 'g')
-        if (docblock.match(triggerRegex)) {
-          var lines = docblock.split('\n')
-                    
-          // at each line, check if any of the parameters are present at the start
-          lines.forEach(function (line, i) {
-            pig.tags.forEach(function (tag) {
-              var tagRegex = new RegExp('\\s\\*\\s' + tag.name),
-                match = line.search(tagRegex) // How does Harry like this when VCS doesn't highlight variables on subsequent lines?!
-                            
-              if (match != -1) {             
-                /*
-                 * For some reason line.split(' ') returns
-                 * 
-                 * [ '',
-                 *   '*',
-                 *   '$param',
-                 *  ...
-                 * ]
-                 * 
-                 * There's an empty string in the beginning... 
-                 * Rather unpredictable. Let's remove that later.
-                 * 
-                 * This effects:
-                 *   var name,
-                 *   split.splice
-                 */
-                var split = line.split(' ')
-                                
-                // Get the tag's name
-                var name = split[2]
-                                
-                // Get the description
-                split.splice(0, 3) // 
-                split = split.join(' ')
-                var desc = split
-                console.log(name, desc)
-
-              }
-            })
-
-
-          })
-
-        }
-      })
-    } else {
-      console.log(error)
+  var _config
+  
+  // Init
+  fs.readFile('pigconfig.json', 'utf8', (err, data) => {
+    if (!err) {
+      _config = JSON.parse(data)
     }
-
+    else {
+      if (VERBOSE_MODE)
+        console.log('pigconfig.json could not be found.')
+    }
   })
-}
+  
+  function PiggyDoc() {
+    /**
+     * Reads or sets the configuration from a path or JSON
+     * 
+     * @method config
+     * @param config {mixed} Can be a path (preferred) or object literal  
+     */
+    this.config = function (config) {
+      var config = config || null
+      if (typeof config == 'object' && config) {
+        _config = config
+      } 
+      else if (typeof config == 'string') {
+        fs.readFile(config, 'utf8', (err, data) => {
+          _config = JSON.parse(data)
+          console.log(_config)
+        })
+      }
+      else {
+        console.log(_config)
+        return _config
+      }
+    }
+    
+    /**
+     * Adds file(s) to files
+     * 
+     * @method addFile
+     */
+    this.addFiles = function (filepath, callback) {
+      var callback = callback || function () {},
+        fileCount = Array.isArray(filepath) ? filepath.length : 1,
+        filesProcessed = 0
+  
+      function addFile (filepath) {
+        fs.readFile(filepath, 'utf8', function (error, data) {
+          if (!error) {
+            let file = {
+              path: filepath,
+              content: data
+            }
+            _files.push(file)
+            
+            if (VERBOSE_MODE)
+              console.log(file.path + ' was successfully added.')
+            
+          } else {
+            console.log('Oops! The file "' + error.path + '" failed to be added.')
+          }
+          filesProcessed++
+          if (filesProcessed == fileCount)
+            callback()
+        }.bind(this))
+      }
+      
+      if (Array.isArray(filepath)) {
+        filepath.forEach( (filepath) => {
+          addFile(filepath)
+        })
+      }
+      else {
+        addFile(filepath)
+      }
+
+    }
+    
+    /**
+     * Parser
+     * 
+     * @method
+     */
+    this.parse = {
+      /**
+       * Get docblocks from files
+       * 
+       * @returns files {Array} An array with the keys being file paths,
+       *    and the values is an array of the docblocks
+       */
+      getDocblocks: function () {
+        var regexDocblock = /(\/\*{2})([\s\S]+?)\*\//g,
+        docblocks,
+        files = []
+          
+        _files.forEach( (file, i) => {
+          docblocks = file.content.match(regexDocblock)
+          files[file.path] = docblocks
+        })
+        console.log(files)
+        return files
+      }
+      /**
+       * Scan lines
+       */
+    }
+  }
+  
+  return PiggyDoc
+}())
 
 /**
  * Test
  * 
  * Leave the following line uncommented out to test this out with the VSC debugger.
  */
-piggydoc.addFile('test.php')
+var piggydoc = new PiggyDoc()
+piggydoc.addFiles(['test.php','another'], piggydoc.parse.getDocblocks)
 
 
-
-module.exports = {
-  doc: generate
-}
+// module.exports = {
+//   doc: generate
+// }
