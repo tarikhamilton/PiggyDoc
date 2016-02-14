@@ -9,7 +9,7 @@ if (VERBOSE_MODE) { console.log('Verbose Mode is ON') }
 /**
  * @class PiggyDoc
  */
-var PiggyDoc = (function() {
+var PiggyDoc = (function () {
   /**
    * Files to be scanned
    * 
@@ -30,7 +30,11 @@ var PiggyDoc = (function() {
    */
   var _config
   
-  // Init
+  /**
+   * Init
+   */
+  
+  // Set default config
   fs.readFile('pigconfig.json', 'utf8', (err, data) => {
     if (!err) {
       _config = JSON.parse(data)
@@ -40,19 +44,20 @@ var PiggyDoc = (function() {
         console.log('pigconfig.json could not be found.')
     }
   })
-  
+
   function PiggyDoc() {
     /**
      * Reads or sets the configuration from a path or JSON
      * 
      * @method  config
-     * @param   settings {mixed} Can be a path (preferred) or object literal  
+     * @param   settings  {mixed} Can be a path (preferred) or object literal
+     * @return  {Object}  Returns current config, if no argument provided
      */
     this.config = function (settings) {
       var config = settings || null
       if (typeof config == 'object' && config) {
         _config = config
-      } 
+      }
       else if (typeof config == 'string') {
         fs.readFile(config, 'utf8', (err, data) => {
           _config = JSON.parse(data)
@@ -64,16 +69,18 @@ var PiggyDoc = (function() {
     }
     
     /**
-     * Adds file(s) to files
+     * Adds file(s) to PiggyDoc's file list
      * 
-     * @method addFile
+     * @method addFiles
+     * @param filepath    {Mixed}     Accepts Array of filepaths or a String of a filepath.
+     * @param [callback]  {Function}  Runs after all files have been added.
      */
     this.addFiles = function (filepath, callback) {
-      var callback = callback || function () {},
+      var callback = callback || function () { },
         fileCount = Array.isArray(filepath) ? filepath.length : 1,
         filesProcessed = 0
-  
-      function addFile (filepath) {
+
+      function addFile(filepath) {
         fs.readFile(filepath, 'utf8', function (error, data) {
           if (!error) {
             let file = {
@@ -81,23 +88,23 @@ var PiggyDoc = (function() {
               content: data
             }
             _files.push(file)
-            
+
             if (VERBOSE_MODE)
               console.log(file.path + ' was successfully added.')
-          } 
+          }
           else
             console.log('Oops! The file "' + error.path + '" failed to be added.')
-            
+
           filesProcessed++
-          
+
           if (filesProcessed == fileCount)
             callback()
-            
+
         }.bind(this))
       }
-      
+
       if (Array.isArray(filepath)) {
-        filepath.forEach( (filepath) => {
+        filepath.forEach((filepath) => {
           addFile(filepath)
         })
       }
@@ -121,10 +128,10 @@ var PiggyDoc = (function() {
        */
       getDocblocks: function () {
         var regexDocblock = /(\/\*{2})([\s\S]+?)\*\//g,
-        docblocks,
-        files = []
-          
-        _files.forEach( (file, i) => {
+          docblocks,
+          files = []
+
+        _files.forEach((file, i) => {
           docblocks = file.content.match(regexDocblock)
           files[file.path] = docblocks
         })
@@ -138,13 +145,13 @@ var PiggyDoc = (function() {
        * @param   callback {Function} Perform function on each line.
        */
       onEachLine: function (callback) {
-        
+
       }
     }
   }
-  
+
   return PiggyDoc
-}())
+} ())
 
 /**
  * Test
@@ -152,7 +159,7 @@ var PiggyDoc = (function() {
  * Leave the following line uncommented out to test this out with the VSC debugger.
  */
 var piggydoc = new PiggyDoc()
-piggydoc.addFiles(['test.php','another'], piggydoc.parse.getDocblocks)
+piggydoc.addFiles(['test.php', 'another'], piggydoc.parse.getDocblocks)
 
 
 // module.exports = {
