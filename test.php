@@ -1,6 +1,4 @@
-pre php
 <?php
-stuff
 /**
  * Shortcode A
  * 
@@ -10,6 +8,7 @@ stuff
  * @param $content Content inside a tag
  *
  * @shortcode cta
+ * $selfClosing false
  * $param link|required The destination for your link
  * $param style The appearance
  */
@@ -26,6 +25,3 @@ stuff
  *
  */
  
- sup
- ?>
- test
